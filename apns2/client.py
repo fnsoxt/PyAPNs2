@@ -78,6 +78,12 @@ class APNsClient(object):
         thread.setDaemon(True)
         thread.start()
 
+    def send(self, token_hex: str, notification: Payload, topic: Optional[str] = None,
+                          priority: NotificationPriority = NotificationPriority.Immediate,
+                          expiration: Optional[int] = None, collapse_id: Optional[str] = None) -> None:
+        stream_id = self.send_notification_async(token_hex, notification, topic, priority, expiration, collapse_id)
+        return stream_id
+
     def send_notification(self, token_hex: str, notification: Payload, topic: Optional[str] = None,
                           priority: NotificationPriority = NotificationPriority.Immediate,
                           expiration: Optional[int] = None, collapse_id: Optional[str] = None) -> None:
@@ -93,11 +99,12 @@ class APNsClient(object):
     def send_notification_async(self, token_hex: str, notification: Payload, topic: Optional[str] = None,
                                 priority: NotificationPriority = NotificationPriority.Immediate,
                                 expiration: Optional[int] = None, collapse_id: Optional[str] = None) -> int:
-        json_str = json.dumps(notification.dict(), cls=self.__json_encoder, ensure_ascii=False, separators=(',', ':'))
+        json_str = json.dumps(notification, cls=self.__json_encoder, ensure_ascii=False, separators=(',', ':'))
+
         json_payload = json_str.encode('utf-8')
 
         headers = {
-            'apns-push-type': notification.push_type
+            'apns-push-type': 'alert'
         }
 
         if topic is not None:
@@ -119,6 +126,9 @@ class APNsClient(object):
         url = '/3/device/{}'.format(token_hex)
         stream_id = self._connection.request('POST', url, json_payload, headers)  # type: int
         return stream_id
+
+    def get_response(self, stream_id: int) -> Union[str, Tuple[str, str]]:
+        return self._connection.get_response(stream_id)
 
     def get_notification_result(self, stream_id: int) -> Union[str, Tuple[str, str]]:
         """
