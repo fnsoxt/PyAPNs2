@@ -127,8 +127,8 @@ class APNsClient(object):
         stream_id = self._connection.request('POST', url, json_payload, headers)  # type: int
         return stream_id
 
-    def get_response(self, stream_id: int) -> Union[str, Tuple[str, str]]:
-        return self._connection.get_response(stream_id)
+    def get_connection(self):
+        return self._connection
 
     def get_notification_result(self, stream_id: int) -> Union[str, Tuple[str, str]]:
         """
